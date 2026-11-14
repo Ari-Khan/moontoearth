@@ -2,18 +2,21 @@ import { useState } from "react";
 import * as THREE from "three";
 import { useTexture } from "@react-three/drei";
 import Camera from "./Camera.jsx";
+import LunarTerrain from "./LunarTerrain.jsx";
+import { pointToLatLon, sampleLunarCharacteristics } from "../utils/lunarTerrain.js";
 
-const GEOMETRY = new THREE.SphereGeometry(1, 128, 64);
-const MARKER_RADIUS = 0.035;
+const GEOMETRY = new THREE.SphereGeometry(1, 256, 128);
+const MARKER_RADIUS = 0.012;
 
-function MoonSurface() {
-    const [marker, setMarker] = useState(null);
+function MoonSurface({ selectedPoint, onSelectSite }) {
     const texture = useTexture("/textures/physical.jpg", (loadedTexture) => {
-        loadedTexture.anisotropy = 4;
+        loadedTexture.anisotropy = 16;
         loadedTexture.colorSpace = THREE.SRGBColorSpace;
         loadedTexture.wrapS = THREE.RepeatWrapping;
         loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
         loadedTexture.minFilter = THREE.LinearMipmapLinearFilter;
+        loadedTexture.generateMipmaps = true;
+        loadedTexture.needsUpdate = true;
     });
 
     return (
@@ -22,13 +25,19 @@ function MoonSurface() {
                 geometry={GEOMETRY}
                 onClick={(event) => {
                     event.stopPropagation();
-                    setMarker(
-                        event.point
-                            .clone()
-                            .normalize()
-                            .multiplyScalar(1 + MARKER_RADIUS)
-                            .toArray(),
-                    );
+                    const surfacePoint = event.point
+                        .clone()
+                        .normalize()
+                        .multiplyScalar(1 + MARKER_RADIUS)
+                        .toArray();
+                    const coords = pointToLatLon(surfacePoint);
+                    const characteristics = sampleLunarCharacteristics(texture, event.uv);
+
+                    onSelectSite({
+                        point: surfacePoint,
+                        ...coords,
+                        characteristics,
+                    });
                 }}
             >
                 <meshStandardMaterial
@@ -38,8 +47,8 @@ function MoonSurface() {
                     envMapIntensity={0.2}
                 />
             </mesh>
-            {marker && (
-                <mesh position={marker} renderOrder={2}>
+            {selectedPoint && (
+                <mesh position={selectedPoint} renderOrder={2}>
                     <sphereGeometry args={[MARKER_RADIUS, 20, 20]} />
                     <meshBasicMaterial color="#ff3b30" />
                 </mesh>
@@ -51,20 +60,91 @@ function MoonSurface() {
 function Moon() {
     const [mapOpen, setMapOpen] = useState(false);
     const [bright, setBright] = useState(true);
+    const [selectedSite, setSelectedSite] = useState(null);
+    const [generatedSite, setGeneratedSite] = useState(null);
 
     return (
         <main className="viewer">
-            <Camera bright={bright}>
-                <MoonSurface />
-            </Camera>
-            <button
-                type="button"
-                className={`map-button${mapOpen ? " is-active" : ""}`}
-                onClick={() => setMapOpen((open) => !open)}
-                aria-pressed={mapOpen}
-            >
-                Map
-            </button>
+            {generatedSite ? (
+                <LunarTerrain site={generatedSite} bright={bright} />
+            ) : (
+                <Camera bright={bright}>
+                    <MoonSurface
+                        selectedPoint={selectedSite?.point ?? null}
+                        onSelectSite={setSelectedSite}
+                    />
+                </Camera>
+            )}
+
+            {generatedSite ? (
+                <>
+                    <button
+                        type="button"
+                        className="back-button"
+                        onClick={() => {
+                            if (document.pointerLockElement) {
+                                document.exitPointerLock();
+                            }
+                            setGeneratedSite(null);
+                        }}
+                    >
+                        ← Back to Moon
+                    </button>
+                    <div className="terrain-hud" role="status">
+                        <div className="terrain-hud-title">{generatedSite.characteristics.terrainType}</div>
+                        <div className="terrain-hud-meta">
+                            {generatedSite.label} • Drag to orbit, right-drag to pan, scroll to zoom
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    {selectedSite && (
+                        <div className="site-popup" role="dialog" aria-label="Selected lunar location">
+                            <div className="site-popup-header">
+                                <span className="site-popup-kicker">Selected Location</span>
+                                <button
+                                    type="button"
+                                    className="site-popup-close"
+                                    onClick={() => setSelectedSite(null)}
+                                    aria-label="Close popup"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <div className="site-popup-coords">{selectedSite.label}</div>
+                            <div className="site-popup-type">
+                                {selectedSite.characteristics.terrainType}
+                            </div>
+                            <div className="site-popup-stats">
+                                <span>
+                                    Crater density: {Math.round(selectedSite.characteristics.craterDensity * 100)}%
+                                </span>
+                                <span>
+                                    Roughness: {Math.round(selectedSite.characteristics.roughness * 100)}%
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                className="generate-button"
+                                onClick={() => setGeneratedSite(selectedSite)}
+                            >
+                                Generate 3D Model
+                            </button>
+                        </div>
+                    )}
+
+                    <button
+                        type="button"
+                        className={`map-button${mapOpen ? " is-active" : ""}`}
+                        onClick={() => setMapOpen((open) => !open)}
+                        aria-pressed={mapOpen}
+                    >
+                        Map
+                    </button>
+                </>
+            )}
+
             <button
                 type="button"
                 className={`light-button${bright ? " is-bright" : ""}`}
