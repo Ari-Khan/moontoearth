@@ -2,12 +2,11 @@ import { useState } from "react";
 import * as THREE from "three";
 import { useTexture } from "@react-three/drei";
 import Camera from "./Camera.jsx";
+import Marker from "./Marker.jsx";
 
 const GEOMETRY = new THREE.SphereGeometry(1, 128, 64);
-const MARKER_RADIUS = 0.035;
 
 function MoonSurface() {
-    const [marker, setMarker] = useState(null);
     const texture = useTexture("/textures/physical.jpg", (loadedTexture) => {
         loadedTexture.anisotropy = 4;
         loadedTexture.colorSpace = THREE.SRGBColorSpace;
@@ -17,20 +16,8 @@ function MoonSurface() {
     });
 
     return (
-        <>
-            <mesh
-                geometry={GEOMETRY}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    setMarker(
-                        event.point
-                            .clone()
-                            .normalize()
-                            .multiplyScalar(1 + MARKER_RADIUS)
-                            .toArray(),
-                    );
-                }}
-            >
+        <Marker>
+            <mesh geometry={GEOMETRY}>
                 <meshStandardMaterial
                     map={texture}
                     roughness={0.92}
@@ -38,13 +25,7 @@ function MoonSurface() {
                     envMapIntensity={0.2}
                 />
             </mesh>
-            {marker && (
-                <mesh position={marker} renderOrder={2}>
-                    <sphereGeometry args={[MARKER_RADIUS, 20, 20]} />
-                    <meshBasicMaterial color="#ff3b30" />
-                </mesh>
-            )}
-        </>
+        </Marker>
     );
 }
 
