@@ -19,8 +19,8 @@ function Camera({ bright = true, children }) {
             <OrbitControls
                 enableDamping
                 enablePan={false}
-                minDistance={1.6}
-                maxDistance={6}
+                minDistance={1.025}
+                maxDistance={5.5}
             />
         </Canvas>
     );
