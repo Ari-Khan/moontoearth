@@ -3,7 +3,6 @@ import * as THREE from "three";
 import { useTexture } from "@react-three/drei";
 import Camera from "./Camera.jsx";
 import { createGeodesicGrid } from "./HexGrid.jsx";
-import AnalogExplorer from "./AnalogExplorer.jsx";
 import earthScienceDataUrl from "../data/earth-tile-science-data.json?url";
 import earthTileDataUrl from "../data/earth-tile-data.json?url";
 
@@ -275,12 +274,6 @@ function getRegionalPlaceName(address) {
     return "";
 }
 
-function lunarSurfaceMaterial(elevation) {
-    return elevation.averageElevation < 0
-        ? "Basaltic / gravel-like"
-        : "Anorthositic / highland-like";
-}
-
 async function reverseGeocode(analog, signal) {
     const query = new URLSearchParams({
         format: "jsonv2",
@@ -508,7 +501,6 @@ function EarthAnalogMap({ selectedTile }) {
     const [focusedAnalog, setFocusedAnalog] = useState(null);
     const [focusRequest, setFocusRequest] = useState(0);
     const [placeNames, setPlaceNames] = useState({});
-    const [explorerOpen, setExplorerOpen] = useState(false);
     const handleSurfaceReady = useCallback(() => {
         setSurfaceReady(true);
     }, []);
@@ -588,20 +580,22 @@ function EarthAnalogMap({ selectedTile }) {
         const controller = new AbortController();
         let active = true;
         const loadPlaceNames = async () => {
-            const resolved = {};
-            for (const analog of analogs) {
-                try {
-                    resolved[analog.tileId] = await reverseGeocode(
-                        analog,
-                        controller.signal,
-                    );
-                } catch (error) {
-                    if (error.name === "AbortError") return;
-                    resolved[analog.tileId] = "Earth location";
-                }
-                await new Promise((resolve) => setTimeout(resolve, 1100));
+            const results = await Promise.all(
+                analogs.map(async (analog) => {
+                    try {
+                        return [
+                            analog.tileId,
+                            await reverseGeocode(analog, controller.signal),
+                        ];
+                    } catch (error) {
+                        if (error.name === "AbortError") return null;
+                        return [analog.tileId, "Earth location"];
+                    }
+                }),
+            );
+            if (active) {
+                setPlaceNames(Object.fromEntries(results.filter(Boolean)));
             }
-            if (active) setPlaceNames(resolved);
         };
         loadPlaceNames();
         return () => {
@@ -612,19 +606,17 @@ function EarthAnalogMap({ selectedTile }) {
 
     return (
         <section className="earth-view" aria-label="Earth analog globe">
-            {!explorerOpen && (
-                <Camera
-                    bright
-                    focus={activeFocusedAnalog?.center}
-                    focusRequest={focusRequest}
-                >
-                    <EarthSurface
-                        onReady={handleSurfaceReady}
-                        onLandTilesReady={handleLandTilesReady}
-                        selectedCellId={activeFocusedAnalog?.tileId}
-                    />
-                </Camera>
-            )}
+            <Camera
+                bright
+                focus={activeFocusedAnalog?.center}
+                focusRequest={focusRequest}
+            >
+                <EarthSurface
+                    onReady={handleSurfaceReady}
+                    onLandTilesReady={handleLandTilesReady}
+                    selectedCellId={activeFocusedAnalog?.tileId}
+                />
+            </Camera>
             <div
                 className={`earth-loading${isVisible ? " is-complete" : ""}`}
                 role="status"
@@ -634,17 +626,15 @@ function EarthAnalogMap({ selectedTile }) {
                 <span>Loading Earth analogs…</span>
             </div>
             <div className="earth-status">
-                <p className="earth-status-kicker">EARTH ANALOGS</p>
                 <h2>
                     {selectedTile
-                        ? `Compared with lunar tile ${selectedTile.tileId}`
+                        ? `Compared with lunar coordinates ${selectedTile.latitude.toFixed(2)}° ${
+                              selectedTile.latitude >= 0 ? "N" : "S"
+                          }, ${Math.abs(selectedTile.longitude).toFixed(2)}° ${
+                              selectedTile.longitude >= 0 ? "E" : "W"
+                          }`
                         : "Select a lunar tile first"}
                 </h2>
-                <p>
-                    Land-only geodesic tiles · detail 100
-                    {selectedTile &&
-                        ` · ${lunarSurfaceMaterial(selectedTile.elevation)}`}
-                </p>
             </div>
             <aside className="location-bar analog-bar" aria-label="Earth analogs">
                 <div className="location-bar-heading">
@@ -724,24 +714,6 @@ function EarthAnalogMap({ selectedTile }) {
                     ))}
                 </div>
             </aside>
-            {activeFocusedAnalog && (
-                <button
-                    type="button"
-                    className="explore-button"
-                    onClick={() => setExplorerOpen(true)}
-                >
-                    Explore selected analog in 3D
-                </button>
-            )}
-            {explorerOpen && activeFocusedAnalog && (
-                <AnalogExplorer
-                    analog={activeFocusedAnalog}
-                    isAntarctic={
-                        placeNames[activeFocusedAnalog.tileId] === "Antarctica"
-                    }
-                    onClose={() => setExplorerOpen(false)}
-                />
-            )}
         </section>
     );
 }
