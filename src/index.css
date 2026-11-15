@@ -51,41 +51,457 @@ button {
     cursor: grabbing;
 }
 
+.earth-view {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: #050607;
+}
+
+.earth-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    color: #e8e4dc;
+    background: #000;
+    opacity: 1;
+    transition: opacity 700ms ease;
+    pointer-events: auto;
+}
+
+.earth-loading span {
+    animation: earth-loading-pulse 1.4s ease-in-out infinite;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.earth-loading.is-complete {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes earth-loading-pulse {
+    0%,
+    100% {
+        opacity: 0.42;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.earth-map-frame {
+    position: relative;
+    width: min(100vw, 200vh);
+    height: min(50vw, 100vh);
+    overflow: hidden;
+}
+
+.earth-map-image,
+.earth-tile-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.earth-map-image {
+    display: block;
+    object-fit: fill;
+}
+
+.earth-tile-layer {
+    pointer-events: none;
+}
+
+.earth-tile {
+    position: absolute;
+    border: 1px solid rgba(255, 75, 75, 0.62);
+    background: rgba(255, 75, 75, 0.12);
+}
+
+.earth-status {
+    position: absolute;
+    top: clamp(24px, 4vw, 56px);
+    right: clamp(16px, 2.5vw, 40px);
+    left: auto;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    background: rgba(10, 12, 13, 0.82);
+    backdrop-filter: blur(12px);
+}
+
+.earth-status-kicker {
+    margin: 0 0 5px;
+    color: #ff7777;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.earth-status h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 15px;
+}
+
+.earth-status p:last-child {
+    margin: 6px 0 0;
+    color: #aaa9a4;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.tile-panel {
+    position: absolute;
+    top: clamp(24px, 4vw, 56px);
+    right: clamp(16px, 2.5vw, 40px);
+    width: min(248px, calc(100vw - 48px));
+    max-height: calc(100vh - 120px);
+    padding: 18px 20px;
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 14px;
+    color: #e8e4dc;
+    background: rgba(15, 15, 16, 0.82);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.tile-panel,
+.location-list {
+    scrollbar-width: thin;
+    scrollbar-color: #777 transparent;
+}
+
+.tile-panel::-webkit-scrollbar,
+.location-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tile-panel::-webkit-scrollbar-track,
+.location-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tile-panel::-webkit-scrollbar-thumb,
+.location-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #777;
+}
+
+.tile-panel::-webkit-scrollbar-thumb:hover,
+.location-list::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.tile-panel h2 {
+    margin: 0;
+    color: #fff;
+    font-family: "Avenir Next", "Segoe UI", sans-serif;
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: 0;
+}
+
+.tile-panel-coordinates {
+    margin: 5px 0 16px;
+    color: #99958e;
+    font-size: 11px;
+}
+
+.tile-panel dl {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+}
+
+.tile-panel dl div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tile-panel dt {
+    color: #938f88;
+    font-size: 11px;
+}
+
+.tile-panel dd {
+    margin: 0;
+    color: #f3efe8;
+    font-size: 12px;
+}
+
+.tile-panel-error {
+    margin: 0;
+    color: #ff8e86;
+    font-size: 12px;
+}
+
+.location-bar {
+    position: absolute;
+    top: clamp(24px, 4vw, 56px);
+    left: clamp(16px, 2.5vw, 40px);
+    width: min(248px, calc(100vw - 48px));
+    max-height: min(64vh, 590px);
+    padding: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 14px;
+    background: rgba(15, 15, 16, 0.82);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+}
+
+.location-bar-heading {
+    padding: 2px 4px 12px;
+}
+
+.location-bar-title {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.location-list {
+    display: grid;
+    gap: 5px;
+    max-height: calc(min(64vh, 590px) - 74px);
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.location-option {
+    display: grid;
+    width: 100%;
+    gap: 4px;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: #dedbd4;
+    background: rgba(255, 255, 255, 0.045);
+    text-align: left;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.location-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.location-option.is-selected {
+    border-color: rgba(255, 209, 102, 0.55);
+    background: rgba(132, 91, 24, 0.38);
+}
+
+.location-option-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.location-option strong {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.location-option small,
+.location-option-type {
+    color: #9c9992;
+    font-size: 10px;
+}
+
+.location-option-type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.analog-bar {
+    left: clamp(16px, 2.5vw, 40px);
+    width: min(360px, calc(100vw - 48px));
+    display: flex;
+    max-height: min(64vh, 590px);
+    flex-direction: column;
+}
+
+.analog-list {
+    min-height: 0;
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+}
+
+.analog-option-benefit,
+.analog-option-con {
+    color: #80e8ad;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.analog-option-con {
+    color: #e0a19a;
+}
+
+.analog-option-details {
+    display: grid;
+    gap: 2px;
+}
+
+.analog-option-match,
+.analog-option-climate {
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.analog-option-match.is-green {
+    color: #80e8ad;
+}
+
+.analog-option-match.is-yellow,
+.analog-option-climate {
+    color: #e5c46b;
+}
+
+.analog-option-match.is-red {
+    color: #ff7770;
+}
+
+.analog-empty {
+    margin: 0;
+    color: #aaa9a4;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.explore-button {
+    position: absolute;
+    right: clamp(24px, 4vw, 56px);
+    bottom: clamp(82px, 10vw, 108px);
+    z-index: 3;
+    padding: 12px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 999px;
+    color: #f0ece5;
+    background: rgba(24, 24, 26, 0.88);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+}
+
+.explore-button:hover {
+    background: rgba(52, 52, 56, 0.94);
+}
+
+.analog-explorer {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: #11100f;
+}
+
+.analog-explorer canvas {
+    display: block;
+}
+
+.analog-explorer-hud {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    left: 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    pointer-events: none;
+}
+
+.analog-explorer-hud div {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    color: #f2eee7;
+    background: rgba(14, 14, 15, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.analog-explorer-hud span {
+    color: #b7b2aa;
+    font-size: 11px;
+}
+
+.analog-explorer-hud button {
+    pointer-events: auto;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    color: #f2eee7;
+    background: rgba(14, 14, 15, 0.75);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+}
+
 .map-button {
     position: absolute;
     right: clamp(24px, 4vw, 56px);
     bottom: clamp(24px, 4vw, 48px);
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    min-width: 92px;
     justify-content: center;
-    padding: 12px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    gap: 10px;
+    height: 44px;
+    padding: 0 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 999px;
-    color: #fff;
-    background: #1769e8;
-    box-shadow: 0 8px 26px rgba(23, 105, 232, 0.28);
+    color: #e8e4dc;
+    background: rgba(28, 28, 30, 0.82);
+    backdrop-filter: blur(6px);
     cursor: pointer;
     font-family: "Avenir Next", "Segoe UI", sans-serif;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.01em;
-    transition: background 160ms ease;
+    letter-spacing: 0.04em;
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
 .map-button:hover {
-    background: #2b7af1;
+    background: rgba(48, 48, 52, 0.92);
 }
 
 .map-button.is-active {
-    background: #0e4eb4;
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(56, 56, 62, 0.9);
 }
 
-.light-button {
+.left-controls {
     position: absolute;
     left: clamp(24px, 4vw, 56px);
     bottom: clamp(24px, 4vw, 48px);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.surface-button,
+.light-button,
+.grid-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -101,8 +517,22 @@ button {
     transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
-.light-button:hover {
+.surface-button:hover,
+.light-button:hover,
+.grid-button:hover {
     background: rgba(36, 34, 31, 0.9);
+}
+
+.surface-button {
+    color: #ff6868;
+    border-color: rgba(255, 104, 104, 0.42);
+    background: rgba(76, 25, 25, 0.72);
+}
+
+.surface-button.is-displacement {
+    color: #ff9a9a;
+    background: rgba(128, 35, 35, 0.8);
+    box-shadow: 0 0 22px rgba(255, 72, 72, 0.2);
 }
 
 .light-button.is-bright {
@@ -112,12 +542,39 @@ button {
     box-shadow: 0 0 22px rgba(255, 205, 80, 0.18);
 }
 
+.grid-button.is-active {
+    color: #8bc2ff;
+    border-color: rgba(139, 194, 255, 0.42);
+    background: rgba(22, 52, 83, 0.68);
+    box-shadow: 0 0 22px rgba(88, 166, 255, 0.18);
+}
+
 .light-icon {
     width: 19px;
     height: 19px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.grid-icon {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.surface-icon {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.45;
     stroke-linecap: round;
     stroke-linejoin: round;
 }

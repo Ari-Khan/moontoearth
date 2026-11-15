@@ -6,6 +6,8 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
+        "generate:earth-data": "node scripts/generate-earth-tile-data.js",
+        "enrich:earth-data": "node scripts/enrich-earth-science-data.js",
         "lint": "oxlint",
         "format": "prettier --write .",
         "preview": "vite preview"
@@ -13,6 +15,8 @@
     "dependencies": {
         "@react-three/drei": "^10.7.9",
         "@react-three/fiber": "^9.8.2",
+        "geotiff": "^3.0.5",
+        "jpeg-js": "^0.4.4",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
         "three": "^0.187.0"
